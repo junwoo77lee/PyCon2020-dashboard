@@ -9,17 +9,27 @@ function drawBarChart(sortedData, div) {
 function drawBars(config, sortedData, xScaler, yScaler) {
     let { chart } = config;
     let barGroup = addToParent(chart, 'g', 'bar', null);
-    barGroup.selectAll('.bar')
+    let bars = barGroup.selectAll('.bar')
         .data(sortedData)
         .enter()
         .append('rect')
+        //.attr('fill', 'black')
+        .on(
+            'click', d => displayVideoInfo(d)
+        ).on('mouseenter', function() {
+            this.style.fill = 'red';
+        }).on('mouseleave', function() {
+            this.style.fill = 'black';
+        });
+
+    bars.transition()
+        .duration(300)
         .attrs({
             'x': 0,
             'y': d => yScaler(d.Video_id),
             'width': d => xScaler(d.viewCount),
             'height': yScaler.bandwidth()
-        })
-        .on('click', d => displayVideoInfo(d));
+        });
 }
 
 function drawAxes(config, sortedData) {
@@ -28,10 +38,14 @@ function drawAxes(config, sortedData) {
 
     let xAxis = d3.axisTop(xScaler);
     addToParent(chart, 'g', 'x-axis', null)
+        .transition()
+        .duration(500)
         .call(xAxis);
 
     let yAxis = d3.axisLeft(yScaler);
     addToParent(chart, 'g', 'y-axis', null)
+        .transition()
+        .duration(500)
         .call(yAxis);
 
     return { xAxis, yAxis, xScaler, yScaler }
@@ -54,39 +68,28 @@ function createScaler(config, data) {
 
 function displayVideoInfo(info) {
     let divInfo = d3.select("#video-info");
-    clearContents(divInfo)
+    clearContents(divInfo);
 
-    divInfo.selectAll('div.container')
+    // fill the video infomation clicked
+    Object.keys(info).forEach(key => {
+        if (!key.includes("_") && !key.includes("Count")) {
+            renderSelection(key, info);
+        }
+    });
+
+    // add the video stats
+    d3.select("#video-Stats")
         .data([info])
-        .enter()
-        .append('div')
-        .classed('container mt-2', true)
-        .html(d => `<dl class="row">
-                    <dt class="col-sm-3">Title</dt>
-                    <dd class="col-sm-9">${d.Title}</dd>
-                    <dt class="col-sm-3">Vide Stats</dt>
-                    <dd class="col-sm-9">
-                        <span class="badge badge-pill badge-success">Like ${d.likeCount === undefined ? 0 : d.likeCount}</span>
-                        <span class="badge badge-pill badge-danger">Dislike ${d.dislikeCount === undefined ? 0 : d.dislikeCount}</span>
-                        <span class="badge badge-pill badge-primary">Favorite ${d.favoriteCount}</span>
-                        <span class="badge badge-pill badge-info">Comments ${d.commentCount}</span>
-                    </dd>                                        
-                    <dt class="col-sm-3"></dt>
-                    <dd class="col-sm-9">
-                        <button type="button" class="btn btn-outline-dark btn-sm btn-block" id="link" data-toggle="modal" data-target=".bd-modal-lg">Watch</button>
-                    </dd>
-                    <dt class="col-sm-3 mt-2">Description</dt>
-                    <dd class="col-sm-9">
-                    <p>${d.Description}</p>
-                    </dd>
-                
-                    <dt class="col-sm-3">Author</dt>
-                    <dd class="col-sm-9">${d.Author}</dd>
-                
-                    <dt class="col-sm-3">Profile</dt>
-                    <dd class="col-sm-9">${d.Bio}</dd>
-                    </dl>`);
+        .html(d => `<span class="badge badge-pill badge-success">Like ${d.likeCount === undefined ? 0 : d.likeCount}</span>
+               <span class="badge badge-pill badge-danger">Dislike ${d.dislikeCount === undefined ? 0 : d.dislikeCount}</span>
+               <span class="badge badge-pill badge-primary">Favorite ${d.favoriteCount}</span>
+               <span class="badge badge-pill badge-info">Comments ${d.commentCount}</span>`);
 
+    // add a button to watch the video
+    d3.select("#video-Watch")
+        .html('<button type="button" class="btn btn-outline-dark btn-sm btn-block" id="link" data-toggle="modal" data-target=".bd-modal-lg">Watch</button>');
+
+    // Pop a modal embedding the video when user clicks 'watch' button
     $('#link').click(function() {
         let src = `https://www.youtube.com/embed/${info.Video_id}`;
         $('#currentVideo').modal('show');
@@ -97,4 +100,10 @@ function displayVideoInfo(info) {
         $('#currentVideo iframe').removeAttr('src');
     });
 
+}
+
+function renderSelection(content, data) {
+    d3.select(`#video-${content}`)
+        .data([data])
+        .html(d => d[content]);
 }
