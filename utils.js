@@ -40,5 +40,26 @@ function sortData(data, order, attribute) {
 
 function clearContents(tag) {
     // tag: d3.selection object
-    tag.html(null);
+    if (tag._groups[0][0].id !== "video-info") {
+        tag.html(null);
+    } else {
+        tag.html(`<div class="container mt-2">
+                  <dl class="row">
+                  <dt class="col-sm-3">Title</dt>
+                  <dd class="col-sm-9" id="video-Title"></dd>
+                  <dt class="col-sm-3">Video Stats</dt>
+                  <dd class="col-sm-9" id="video-Stats"></dd>                                        
+                  <dt class="col-sm-3"></dt>
+                  <dd class="col-sm-9" id="video-Watch"></dd>
+                  <dt class="col-sm-3 mt-2">Description</dt>
+                  <dd class="col-sm-9" id="video-Description"></dd>
+            
+                  <dt class="col-sm-3">Author</dt>
+                  <dd class="col-sm-9" id="video-Author"></dd>
+              
+                  <dt class="col-sm-3">Bio</dt>
+                  <dd class="col-sm-9" id="video-Bio"></dd>
+                  </dl>
+                  </div>`);
+    }
 }
